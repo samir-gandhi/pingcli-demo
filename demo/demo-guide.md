@@ -15,7 +15,7 @@
    export PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID=693db5e7-3432-4662-8d1a-597c20543d27
    ```
 4. **pingcli-demo repo** checked out at `~/projects/config-automation/pingcli-demo` — GitHub Actions green from last run (targets `pingcli-demo-env`).
-5. **Drift seeded in `pingcli-demo-env`** — live `Demo Population` description is `"Manually edited in admin console"`, repo has `"Default population for demo environment users"`. Verify:
+5. **Drift seeded in `pingcli-demo-env`** — live `Demo Users` description is `"Manually edited in admin console"`, repo has `"Default population for demo environment users"`. Verify:
    ```bash
    pingcli pingone populations list --environment-id $CICD_ENV_ID -O json
    ```
@@ -134,9 +134,9 @@ pingcli pingone applications get \
 ### 5c — Template → create (live demo)
 ```bash
 pingcli pingone populations template          # show the full skeleton
-pingcli pingone populations template | jq '{name: "Demo Population 2"}'   # minimal
+pingcli pingone populations template | jq '{name: "Demo Users 2"}'   # minimal
 
-echo '{"name": "Demo Population 2"}' \
+echo '{"name": "Demo Users 2"}' \
   | pingcli pingone populations create --environment-id $ENV_ID --from-file -
 
 pingcli pingone populations list --environment-id $ENV_ID   # confirm it's there
