@@ -1,4 +1,4 @@
-# Ping CLI — CI/CD Demo
+# Ping CLI Demo
 
 This repository demonstrates how to use [Ping CLI](https://github.com/pingidentity/pingcli)
 to deploy PingOne configuration as code — covering CI/CD pipelines, interactive human use, and agentic automation.
