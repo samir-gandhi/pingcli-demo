@@ -91,7 +91,7 @@ jobs:
           pingcli pingone sign-on-policies list \
             --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
             --output-format json \
-            --query 'data[?enabled].name' \
+            --query 'data[].name' \
             --no-color
 
       # ── Raw API escape hatch for resources not yet in the CLI ─────────────
