@@ -1,0 +1,100 @@
+name: Deploy Ping Identity Configuration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ping-config/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment profile
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    env:
+      # Ping CLI reads these automatically — no config file needed in the runner
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_TYPE: client_credentials
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTID: ${{ secrets.PINGONE_CLIENT_ID }}
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTSECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
+      PINGCLI_SERVICE_PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
+      PINGCLI_SERVICE_PINGONE_REGION_CODE: ${{ vars.PINGONE_REGION_CODE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ping CLI
+        run: |
+          curl -fsSL https://github.com/pingidentity/pingcli/releases/latest/download/pingcli_linux_amd64.tar.gz \
+            | tar xz -C /tmp
+          sudo mv /tmp/pingcli /usr/local/bin/pingcli
+          pingcli --version
+
+      - name: Verify authentication
+        run: pingcli auth status --no-color
+
+      # ── Drift check: read current state before applying changes ────────────
+
+      - name: List current applications
+        run: |
+          pingcli pingone applications list \
+            --output-format json \
+            --query 'data[].{name:name, enabled:enabled, protocol:protocol}' \
+            --no-color
+
+      # ── Apply resources in dependency order ────────────────────────────────
+
+      - name: Apply population
+        run: |
+          pingcli --detailed-exitcode pingone populations apply \
+            --from-file ping-config/population.json \
+            --no-color
+
+      - name: Apply password policy
+        run: |
+          pingcli --detailed-exitcode pingone password-policies apply \
+            --from-file ping-config/password-policy.json \
+            --no-color
+
+      - name: Apply OIDC application
+        run: |
+          pingcli --detailed-exitcode \
+            --output-format json \
+            pingone applications apply \
+            --from-file ping-config/application-oidc.json \
+            --no-color
+
+      # ── Post-deploy validation ─────────────────────────────────────────────
+
+      - name: Confirm deployed applications
+        run: |
+          pingcli pingone applications list \
+            --output-format json \
+            --query 'data[?enabled].{name:name, id:id}' \
+            --no-color
+
+      - name: Confirm sign-on policies
+        run: |
+          pingcli pingone sign-on-policies list \
+            --output-format json \
+            --query 'data[?enabled].name' \
+            --no-color
+
+      # ── Raw API escape hatch for resources not yet in the CLI ─────────────
+
+      - name: Check license limits
+        run: |
+          pingcli pingone api \
+            --http-method GET \
+            --output-format json \
+            --no-color \
+            "licenses"
