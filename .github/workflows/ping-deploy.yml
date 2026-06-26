@@ -21,10 +21,11 @@ jobs:
 
     env:
       # Ping CLI reads these automatically — no config file needed in the runner
-      PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID }}
-      PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET }}
-      PINGCLI_PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGCLI_PINGONE_ENVIRONMENT_ID }}
-      PINGCLI_PINGONE_ROOT_DOMAIN: ${{ secrets.PINGCLI_PINGONE_ROOT_DOMAIN }}
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTID: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID }}
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTSECRET: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET }}
+      PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID: ${{ secrets.PINGCLI_PINGONE_ENVIRONMENT_ID }}
+      PINGCLI_SERVICE_PINGONE_ENDPOINT_ROOTDOMAIN: ${{ secrets.PINGCLI_PINGONE_ROOT_DOMAIN }}
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_GRANTTYPE: client_credentials
 
     steps:
       - name: Checkout
@@ -45,6 +46,7 @@ jobs:
       - name: List current applications
         run: |
           pingcli pingone applications list \
+            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
             --output-format json \
             --query 'data[].{name:name, enabled:enabled, protocol:protocol}' \
             --no-color
@@ -54,12 +56,14 @@ jobs:
       - name: Apply population
         run: |
           pingcli --detailed-exitcode pingone populations apply \
+            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
             --from-file ping-config/population.json \
             --no-color
 
       - name: Apply password policy
         run: |
           pingcli --detailed-exitcode pingone password-policies apply \
+            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
             --from-file ping-config/password-policy.json \
             --no-color
 
@@ -68,6 +72,7 @@ jobs:
           pingcli --detailed-exitcode \
             --output-format json \
             pingone applications apply \
+            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
             --from-file ping-config/application-oidc.json \
             --no-color
 
@@ -76,6 +81,7 @@ jobs:
       - name: Confirm deployed applications
         run: |
           pingcli pingone applications list \
+            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
             --output-format json \
             --query 'data[?enabled].{name:name, id:id}' \
             --no-color
@@ -83,6 +89,7 @@ jobs:
       - name: Confirm sign-on policies
         run: |
           pingcli pingone sign-on-policies list \
+            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
             --output-format json \
             --query 'data[?enabled].name' \
             --no-color
