@@ -18,15 +18,13 @@ jobs:
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'staging' }}
 
     env:
       # Ping CLI reads these automatically — no config file needed in the runner
-      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_TYPE: client_credentials
-      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTID: ${{ secrets.PINGONE_CLIENT_ID }}
-      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTSECRET: ${{ secrets.PINGONE_CLIENT_SECRET }}
-      PINGCLI_SERVICE_PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_ENVIRONMENT_ID }}
-      PINGCLI_SERVICE_PINGONE_REGION_CODE: ${{ vars.PINGONE_REGION_CODE }}
+      PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID }}
+      PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET }}
+      PINGCLI_PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGCLI_PINGONE_ENVIRONMENT_ID }}
+      PINGCLI_PINGONE_ROOT_DOMAIN: ${{ secrets.PINGCLI_PINGONE_ROOT_DOMAIN }}
 
     steps:
       - name: Checkout
