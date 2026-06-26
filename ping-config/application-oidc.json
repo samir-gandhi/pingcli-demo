@@ -5,6 +5,7 @@
     "enabled": true,
     "type": "WEB_APP",
     "grantTypes": ["AUTHORIZATION_CODE", "REFRESH_TOKEN"],
+    "responseTypes": ["CODE"],
     "redirectUris": ["https://app.example.com/callback"],
     "postLogoutRedirectUris": ["https://app.example.com/logout"],
     "tokenEndpointAuthMethod": "CLIENT_SECRET_BASIC",
