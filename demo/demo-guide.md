@@ -15,7 +15,7 @@
    export PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID=693db5e7-3432-4662-8d1a-597c20543d27
    ```
 4. **pingcli-demo repo** checked out at `~/projects/config-automation/pingcli-demo` — GitHub Actions green from last run (targets `pingcli-demo-env`).
-5. **Drift seeded in `pingcli-demo-env`** — live `Demo Users` description is `"Manually edited in admin console"`, repo has `"Default population for demo environment users"`. Verify:
+5. **Live change seeded in `pingcli-demo-env`** — live `Demo Users` description is `"Population of users for testing against"`, repo has `"Default population for demo environment users"`. Verify:
    ```bash
    pingcli pingone populations list --environment-id $CICD_ENV_ID -O json
    ```
@@ -23,7 +23,7 @@
    ```bash
    cd ~/projects/config-automation/pingcli-demo
    pingcli agent-skills install pingcli-usage
-   # ping-drift-detect already in .claude/skills/
+   # ping-extract-changes already in .claude/skills/
    ```
 7. **Claude Code open** in `~/projects/config-automation/pingcli-demo` — auth already done.
 8. **Font size** ≥ 18pt. Terminal and editor side-by-side on one screen.
@@ -166,7 +166,7 @@ pingcli agent-skills install pingcli-usage
 
 Explain: `agentskills.io` open format. The skill file is a structured reference the agent loads into context — it knows every command, flag, and pattern without hallucinating.
 
-Show the `ping-drift-detect` skill in `.claude/skills/ping-drift-detect/SKILL.md` — a custom skill that teaches the agent a specific workflow.
+Show the `ping-extract-changes` skill in `.claude/skills/ping-extract-changes/SKILL.md` — a custom skill that teaches the agent a specific workflow.
 
 ### 6b — Pre-auth pattern (explain before the live demo)
 ```bash
@@ -178,20 +178,20 @@ pingcli pingone environments list -O json
 
 **Say:** Device code is interactive — can't run inside an agent. Client credentials work unattended but expose a secret. File-system token is the bridge: human authenticates once, agent operates on their behalf.
 
-### 6c — Live drift detection demo (Claude Code)
+### 6c — Live extract-changes demo (Claude Code)
 
 Switch to Claude Code (open in `pingcli-demo` dir). Give it this prompt:
 
-> *Check for drift between the `ping-config/` directory and the live pingcli-demo-env environment (ID: `693db5e7-3432-4662-8d1a-597c20543d27`). Show me what's out of sync and ask me before fixing anything.*
+> *Extract any changes from the live pingcli-demo-env environment back into the ping-config/ directory. Show me what's different and ask before updating each file.*
 
 Expected flow:
-1. Agent reads `ping-config/population.json` — sees `description: "Default population for demo environment users"`
-2. Agent runs `pingcli pingone populations list --environment-id ... -O json`
-3. Agent finds live description is `"Manually edited in admin console"` — reports drift
-4. Agent asks: *"Apply repo version to fix?"*
-5. Say yes — agent runs `populations apply`, confirms corrected
+1. Agent runs `pingcli pingone populations list --environment-id ... -O json`
+2. Agent reads `ping-config/population.json` — sees repo description is `"Default population for demo environment users"`
+3. Agent finds live description is `"Population of users for testing against"` — reports the difference
+4. Agent asks: *"Update population.json to match live?"*
+5. Say yes — agent updates the file, shows `git diff`, offers to commit
 
-**Key point:** The agent wrote zero code. It used Ping CLI as the action layer, the skill as its knowledge, and its own reasoning to diff and remediate.
+**Key point:** The agent wrote zero code. It used Ping CLI as the read layer, the skill as its knowledge, and its own reasoning to compare and capture the live state back into version control.
 
 ### 6d — When Ping CLI vs MCP
 
@@ -206,7 +206,7 @@ Expected flow:
 
 ### 6e — Prompt engineering tips (quick bullets)
 - Always specify output format: `"use -O json for all commands"`
-- Reference the installed skill: `"use the ping-drift-detect skill"`
+- Reference the installed skill: `"use the ping-extract-changes skill"`
 - Pin the environment: `"use --profile prod"` — prevents the agent from guessing
 - Pre-auth before handoff: `"tokens are stored at ~/.pingcli/credentials"`
 
@@ -246,4 +246,4 @@ Three audiences, one tool:
 - Human demo env: `pingcli-test` — ID `0e837154-0327-4add-9a33-9acf60c0ca10`
 - CI/CD + drift demo env: `pingcli-demo-env` — ID `693db5e7-3432-4662-8d1a-597c20543d27`
 - All verified commands: `demo/demo-commands.sh`
-- Drift skill: `.claude/skills/ping-drift-detect/SKILL.md`
+- Extract-changes skill: `.claude/skills/ping-extract-changes/SKILL.md`
