@@ -32,9 +32,9 @@ jobs:
 
       - name: Install Ping CLI
         run: |
-          curl -fsSL https://github.com/pingidentity/pingcli/releases/latest/download/pingcli_linux_amd64.tar.gz \
-            | tar xz -C /tmp
-          sudo mv /tmp/pingcli /usr/local/bin/pingcli
+          curl -fsSL -o /tmp/pingcli.deb \
+            https://github.com/pingidentity/pingcli/releases/download/v1.1.0/pingcli_1.1.0_linux_amd64.deb
+          sudo dpkg -i /tmp/pingcli.deb
           pingcli --version
 
       - name: Verify authentication
