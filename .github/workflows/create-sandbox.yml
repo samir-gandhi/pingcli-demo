@@ -86,8 +86,8 @@ jobs:
             '.scope.id = $env_id' ping-config/sandbox/group-role-assignment.json \
             > /tmp/role-assignment.json
           pingcli pingone groups group-role-assignments create \
-            --environment-id "${{ secrets.PINGCLI_PINGONE_ADMINISTRATORS_ENV_ID }}" \
-            --group-id "${{ secrets.PINGCLI_PINGONE_IAM_TEAM_GROUP_ID }}" \
+            --environment-id "c83a1b07-73ab-4d63-9251-0a03663f54ae" \
+            --group-id "9000f404-7204-49a2-bf9f-d91e6f960e0d" \
             --from-file /tmp/role-assignment.json \
             --no-color
 
