@@ -84,4 +84,4 @@ jobs:
           ENV_ID="${{ steps.create-env.outputs.env_id }}"
           echo "SANDBOX_NAME=${{ steps.env-name.outputs.name }}"
           echo "SANDBOX_ENV_ID=$ENV_ID"
-          echo "SANDBOX_CONSOLE_URL=https://console.pingone.com/?env=$ENV_ID"
+          echo "SANDBOX_CONSOLE_URL=https://console.${PINGCLI_SERVICE_PINGONE_ENDPOINT_ROOTDOMAIN}/?env=$ENV_ID"
