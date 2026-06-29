@@ -1,0 +1,6 @@
+{
+  "oidc": {
+    "redirectUris": ["https://app.example.com/callback"],
+    "postLogoutRedirectUris": ["https://app.example.com/logout"]
+  }
+}

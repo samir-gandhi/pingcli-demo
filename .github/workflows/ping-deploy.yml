@@ -54,28 +54,31 @@ jobs:
 
       # ── Apply resources in dependency order ────────────────────────────────
 
-      - name: Apply population
+      - name: Apply resources
         run: |
-          pingcli --detailed-exitcode pingone populations apply \
-            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
-            --from-file ping-config/population.json \
-            --no-color
+          ENV_ID="$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID"
+          ENV_NAME="${{ github.event.inputs.environment || 'staging' }}"
 
-      - name: Apply password policy
-        run: |
-          pingcli --detailed-exitcode pingone password-policies apply \
-            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
-            --from-file ping-config/password-policy.json \
-            --no-color
+          RESOURCE_TYPES=(populations password-policies identity-providers notification-policies sign-on-policies groups applications)
 
-      - name: Apply OIDC application
-        run: |
-          pingcli --detailed-exitcode \
-            --output-format json \
-            pingone applications apply \
-            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
-            --from-file ping-config/application-oidc.json \
-            --no-color
+          for type in "${RESOURCE_TYPES[@]}"; do
+            [ -d "ping-config/$type" ] || continue
+            for f in ping-config/$type/*.json; do
+              [ -f "$f" ] || continue
+              fname=$(basename "$f")
+              override="ping-config/overrides/${ENV_NAME}/$type/$fname"
+              if [ -f "$override" ]; then
+                jq -s '.[0] * .[1]' "$f" "$override" > /tmp/merged.json
+                INPUT="/tmp/merged.json"
+              else
+                INPUT="$f"
+              fi
+              pingcli --detailed-exitcode pingone "$type" apply \
+                --environment-id "$ENV_ID" \
+                --from-file "$INPUT" \
+                --no-color
+            done
+          done
 
       # ── Post-deploy validation ─────────────────────────────────────────────
 

@@ -41,6 +41,8 @@ jobs:
           # Replace / with - and strip any characters invalid for PingOne env names
           NAME=$(echo "${{ github.ref_name }}" | sed 's|/|-|g' | tr -cd '[:alnum:]-_')
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          # ENV_NAME is the overlay key — use "sandbox" for all sandbox branches
+          echo "env_name=sandbox" >> "$GITHUB_OUTPUT"
 
       - name: Create or update sandbox environment
         id: create-env
@@ -59,26 +61,31 @@ jobs:
           ENV_ID=$(echo "$OUTPUT" | jq -r '.data.id // .id')
           echo "env_id=$ENV_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Apply population
+      - name: Apply resources
         run: |
-          pingcli --detailed-exitcode pingone populations apply \
-            --environment-id "${{ steps.create-env.outputs.env_id }}" \
-            --from-file ping-config/population.json \
-            --no-color
+          ENV_ID="${{ steps.create-env.outputs.env_id }}"
+          ENV_NAME="${{ steps.env-name.outputs.env_name }}"
 
-      - name: Apply password policy
-        run: |
-          pingcli --detailed-exitcode pingone password-policies apply \
-            --environment-id "${{ steps.create-env.outputs.env_id }}" \
-            --from-file ping-config/password-policy.json \
-            --no-color
+          RESOURCE_TYPES=(populations password-policies identity-providers notification-policies sign-on-policies groups applications)
 
-      - name: Apply OIDC application
-        run: |
-          pingcli --detailed-exitcode pingone applications apply \
-            --environment-id "${{ steps.create-env.outputs.env_id }}" \
-            --from-file ping-config/application-oidc.json \
-            --no-color
+          for type in "${RESOURCE_TYPES[@]}"; do
+            [ -d "ping-config/$type" ] || continue
+            for f in ping-config/$type/*.json; do
+              [ -f "$f" ] || continue
+              fname=$(basename "$f")
+              override="ping-config/overrides/${ENV_NAME}/$type/$fname"
+              if [ -f "$override" ]; then
+                jq -s '.[0] * .[1]' "$f" "$override" > /tmp/merged.json
+                INPUT="/tmp/merged.json"
+              else
+                INPUT="$f"
+              fi
+              pingcli --detailed-exitcode pingone "$type" apply \
+                --environment-id "$ENV_ID" \
+                --from-file "$INPUT" \
+                --no-color
+            done
+          done
 
       - name: Grant IAM Team Environment Admin access to sandbox
         run: |
