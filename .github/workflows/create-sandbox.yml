@@ -60,7 +60,7 @@ jobs:
           OUTPUT=$(pingcli pingone environments apply \
             --from-file /tmp/sandbox-env-final.json \
             --output-format json \
-            --no-color)
+            --no-color 2>&1)
           echo "API response: $OUTPUT"
           ENV_ID=$(echo "$OUTPUT" | jq -r '.id')
           echo "env_id=$ENV_ID" >> "$GITHUB_OUTPUT"
