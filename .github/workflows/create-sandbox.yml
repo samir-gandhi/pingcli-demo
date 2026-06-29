@@ -46,35 +46,15 @@ jobs:
         run: |
           NAME="${{ steps.env-name.outputs.name }}"
 
-          # Read license ID and region from the base environment
-          BASE_ENV=$(pingcli pingone environments get \
-            --environment-id "$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID" \
-            --output-format json --no-color 2>&1)
-          echo "Base env: $BASE_ENV"
-
-          LICENSE_ID=$(echo "$BASE_ENV" | jq -r '.data.license.id')
-          REGION=$(echo "$BASE_ENV" | jq -r '.data.region')
-          echo "License ID: $LICENSE_ID  Region: $REGION"
-
-          # Build minimal create body
-          jq -n \
-            --arg name "$NAME" \
-            --arg license "$LICENSE_ID" \
-            --arg region "$REGION" \
-            '{name: $name, type: "SANDBOX", license: {id: $license}, region: $region}' \
+          # Inject name into the golden config environment template
+          jq --arg name "$NAME" '. + {name: $name}' ping-config/environment.json \
             > /tmp/sandbox-env-final.json
-          echo "Create body:"
-          cat /tmp/sandbox-env-final.json
 
-          set +e
           OUTPUT=$(pingcli pingone environments apply \
             --from-file /tmp/sandbox-env-final.json \
             --output-format json \
-            --no-color 2>&1)
-          EXIT_CODE=$?
-          set -e
-          echo "API response (exit $EXIT_CODE): $OUTPUT"
-          if [ $EXIT_CODE -ne 0 ]; then exit $EXIT_CODE; fi
+            --no-color)
+
           ENV_ID=$(echo "$OUTPUT" | jq -r '.data.id // .id')
           echo "env_id=$ENV_ID" >> "$GITHUB_OUTPUT"
 
