@@ -57,11 +57,15 @@ jobs:
       - name: Create or update sandbox environment
         id: create-env
         run: |
+          set +e
           OUTPUT=$(pingcli pingone environments apply \
             --from-file /tmp/sandbox-env-final.json \
             --output-format json \
             --no-color 2>&1)
-          echo "API response: $OUTPUT"
+          EXIT_CODE=$?
+          set -e
+          echo "API response (exit $EXIT_CODE): $OUTPUT"
+          if [ $EXIT_CODE -ne 0 ]; then exit $EXIT_CODE; fi
           ENV_ID=$(echo "$OUTPUT" | jq -r '.id')
           echo "env_id=$ENV_ID" >> "$GITHUB_OUTPUT"
 
