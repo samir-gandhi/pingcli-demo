@@ -3,5 +3,15 @@
     "id": "96451166-d18e-44c4-b0f4-fef1e8c6ec2a"
   },
   "region": "CA",
-  "type": "SANDBOX"
+  "type": "SANDBOX",
+  "billOfMaterials": {
+    "solutionType": "CIAM_TRIAL",
+    "products": [
+      { "type": "PING_ONE_BASE" },
+      { "type": "PING_ONE_MFA", "subtype": "CIAM" },
+      { "type": "PING_ONE_RISK" },
+      { "type": "PING_ONE_VERIFY" },
+      { "type": "PING_ONE_DAVINCI" }
+    ]
+  }
 }
