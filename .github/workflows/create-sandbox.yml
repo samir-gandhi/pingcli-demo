@@ -83,7 +83,7 @@ jobs:
         run: |
           # Inject the sandbox env ID as the role scope, then create the assignment
           jq --arg env_id "${{ steps.create-env.outputs.env_id }}" \
-            '.scope.id = $env_id' ping-config/group-role-assignment.json \
+            '.scope.id = $env_id' ping-config/sandbox/group-role-assignment.json \
             > /tmp/role-assignment.json
           pingcli pingone groups group-role-assignments create \
             --environment-id "${{ secrets.PINGCLI_PINGONE_ADMINISTRATORS_ENV_ID }}" \

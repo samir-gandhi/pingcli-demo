@@ -16,9 +16,10 @@ This applies to: environments, populations, password policies, applications, and
 ## Repository structure
 
 ```
-ping-config/       # Golden configuration — one file per resource type
-.github/workflows/ # CI/CD pipelines — sandbox creation, deployment
-.claude/skills/    # Agent skills for SDLC operations
+ping-config/           # Golden configuration — one file per resource type
+ping-config/sandbox/   # Sandbox-only config (e.g. role assignments for dev access) — not applied to production
+.github/workflows/     # CI/CD pipelines — sandbox creation, deployment
+.claude/skills/        # Agent skills for SDLC operations
 ```
 
 ## SDLC workflow
