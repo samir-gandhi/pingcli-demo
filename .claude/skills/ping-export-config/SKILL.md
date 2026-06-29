@@ -111,18 +111,64 @@ git commit -m "feat: export <ENV_NAME> environment config-as-code"
 - Resources that exist live but have no file: report as "untracked" — offer to export
 - Files that exist in repo but have no live counterpart: report as "missing live" — do not delete
 - Match existing files to live resources by `name` field only, never by ID
+- Skip known system-default resource names (see list below) — report them as "system-managed, skipped" rather than untracked
+
+## Known system-managed resource names (skip on export)
+
+These are auto-provisioned by PingOne and should not be tracked in config-as-code:
+
+```
+# populations
+Default
+
+# password-policies
+Standard
+Basic
+Passphrase
+
+# languages
+Chinese, Czech, Dutch, English, French, French (Canada), German, Hungarian,
+Italian, Japanese, Korean, Polish, Portuguese, Russian, Spanish, Thai, Turkish
+
+# sign-on-policies
+Single_Factor
+Multi_Factor
+
+# notification-policies
+Default Notification Policy
+
+# resources
+PingOne API
+openid
+
+# applications
+PingOne Application Portal
+PingOne Self-Service - MyAccount
+PingOne DaVinci Connection
+PingOne Helix Connection
+Getting Started Application
+```
+
+If a live resource name matches this list exactly, skip it silently (report count at end). If it does NOT match, treat as untracked and offer to export.
 
 ## Resource types exported (v1 scope)
 
-| Order | Type | Depends on |
-|-------|------|------------|
-| 1 | `populations` | environment |
-| 2 | `password-policies` | environment |
-| 3 | `identity-providers` | environment |
-| 4 | `notification-policies` | environment |
-| 5 | `sign-on-policies` | environment |
-| 6 | `groups` | populations |
-| 7 | `applications` | populations, sign-on-policies |
+| Order | Type | Depends on | Notes |
+|-------|------|------------|-------|
+| 1 | `populations` | environment | |
+| 2 | `password-policies` | environment | |
+| 3 | `languages` | environment | Skip if all `enabled: false` and default |
+| 4 | `agreements` | environment | |
+| 5 | `identity-providers` | environment | |
+| 6 | `notification-policies` | environment | |
+| 7 | `notification-templates` | environment | Skip system defaults with no custom content |
+| 8 | `resources` | environment | Skip `PingOne API` and `openid` — system-managed |
+| 9 | `sign-on-policies` | environment | |
+| 10 | `groups` | populations | |
+| 11 | `gateways` | environment | |
+| 12 | `webhooks` | environment | |
+| 13 | `custom-admin-roles` | environment | |
+| 14 | `applications` | populations, sign-on-policies | |
 
 Out of scope for v1: DaVinci flows/variables, MFA device policies, schema attributes, users, role assignments, gateway credentials, sop-actions (child resources).
 

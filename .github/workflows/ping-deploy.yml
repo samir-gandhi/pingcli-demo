@@ -59,7 +59,7 @@ jobs:
           ENV_ID="$PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID"
           ENV_NAME="${{ github.event.inputs.environment || 'staging' }}"
 
-          RESOURCE_TYPES=(populations password-policies identity-providers notification-policies sign-on-policies groups applications)
+          RESOURCE_TYPES=(populations password-policies languages agreements identity-providers notification-policies notification-templates resources sign-on-policies groups gateways webhooks custom-admin-roles applications)
 
           for type in "${RESOURCE_TYPES[@]}"; do
             [ -d "ping-config/$type" ] || continue

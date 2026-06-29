@@ -71,7 +71,7 @@ All other fields remain in the base file. Base files contain no environment-spec
 Replace all single-file `apply` steps with a single ordered loop. The `RESOURCE_TYPES` array enforces dependency order while the inner glob picks up all files dynamically — no workflow edit needed when adding a new resource instance, only when adding a new resource type (which must be inserted at the correct dependency position).
 
 ```bash
-RESOURCE_TYPES=(populations password-policies identity-providers notification-policies sign-on-policies groups applications)
+RESOURCE_TYPES=(populations password-policies languages agreements identity-providers notification-policies notification-templates resources sign-on-policies groups gateways webhooks custom-admin-roles applications)
 
 for type in "${RESOURCE_TYPES[@]}"; do
   [ -d "ping-config/$type" ] || continue   # skip if folder absent

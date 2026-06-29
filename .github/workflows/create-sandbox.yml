@@ -66,7 +66,7 @@ jobs:
           ENV_ID="${{ steps.create-env.outputs.env_id }}"
           ENV_NAME="${{ steps.env-name.outputs.env_name }}"
 
-          RESOURCE_TYPES=(populations password-policies identity-providers notification-policies sign-on-policies groups applications)
+          RESOURCE_TYPES=(populations password-policies languages agreements identity-providers notification-policies notification-templates resources sign-on-policies groups gateways webhooks custom-admin-roles applications)
 
           for type in "${RESOURCE_TYPES[@]}"; do
             [ -d "ping-config/$type" ] || continue
