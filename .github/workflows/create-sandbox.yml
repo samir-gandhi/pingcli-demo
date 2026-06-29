@@ -17,7 +17,7 @@ jobs:
       PINGCLI_SERVICE_PINGONE_ENABLED: "true"
       PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTID: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID }}
       PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTSECRET: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET }}
-      PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID: ${{ secrets.PINGCLI_PINGONE_ENVIRONMENT_ID }}
+      PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID: ${{ vars.PINGONE_ADMINISTRATORS_ENV_ID }}
       PINGCLI_SERVICE_PINGONE_ENDPOINT_ROOTDOMAIN: pingone.ca
       PINGCLI_SERVICE_PINGONE_AUTHENTICATION_GRANTTYPE: client_credentials
 
@@ -82,15 +82,32 @@ jobs:
 
       - name: Grant IAM Team Environment Admin access to sandbox
         run: |
-          # Inject the sandbox env ID as the role scope, then create the assignment
-          jq --arg env_id "${{ steps.create-env.outputs.env_id }}" \
-            '.scope.id = $env_id' ping-config/sandbox/group-role-assignment.json \
-            > /tmp/role-assignment.json
-          pingcli pingone groups group-role-assignments create \
-            --environment-id "${{ vars.PINGONE_ADMINISTRATORS_ENV_ID }}" \
-            --group-id "9000f404-7204-49a2-bf9f-d91e6f960e0d" \
-            --from-file /tmp/role-assignment.json \
-            --no-color
+          ENV_ID="${{ steps.create-env.outputs.env_id }}"
+          ROLE_ID=$(jq -r '.role.id' ping-config/sandbox/group-role-assignment.json)
+          ADMINS_ENV_ID="${{ vars.PINGONE_ADMINISTRATORS_ENV_ID }}"
+          GROUP_ID="9000f404-7204-49a2-bf9f-d91e6f960e0d"
+
+          # Check if the role is already assigned to this scope (idempotent)
+          EXISTING=$(pingcli pingone groups group-role-assignments list \
+            --environment-id "$ADMINS_ENV_ID" \
+            --group-id "$GROUP_ID" \
+            --output-format json \
+            --no-color \
+            | jq -r --arg role "$ROLE_ID" --arg env "$ENV_ID" \
+              '.data[] | select(.role.id == $role and .scope.id == $env) | .id')
+
+          if [ -n "$EXISTING" ]; then
+            echo "Role already assigned (id=$EXISTING), skipping."
+          else
+            jq --arg env_id "$ENV_ID" '.scope.id = $env_id' \
+              ping-config/sandbox/group-role-assignment.json \
+              > /tmp/role-assignment.json
+            pingcli pingone groups group-role-assignments create \
+              --environment-id "$ADMINS_ENV_ID" \
+              --group-id "$GROUP_ID" \
+              --from-file /tmp/role-assignment.json \
+              --no-color
+          fi
 
       - name: Print sandbox details
         run: |
