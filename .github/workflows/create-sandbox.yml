@@ -48,23 +48,14 @@ jobs:
 
           # Generate template and inject name + type
           pingcli pingone environments template > /tmp/sandbox-env.json
-          python3 - /tmp/sandbox-env.json "$NAME" <<'EOF'
-          import sys, json
-          path, name = sys.argv[1], sys.argv[2]
-          with open(path) as f:
-              body = json.load(f)
-          body["name"] = name
-          body["type"] = "SANDBOX"
-          with open(path, "w") as f:
-              json.dump(body, f, indent=2)
-          EOF
+          jq --arg name "$NAME" '.name = $name | .type = "SANDBOX"' /tmp/sandbox-env.json > /tmp/sandbox-env-final.json
 
           OUTPUT=$(pingcli pingone environments apply \
-            --from-file /tmp/sandbox-env.json \
+            --from-file /tmp/sandbox-env-final.json \
             --output-format json \
             --no-color)
 
-          ENV_ID=$(echo "$OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          ENV_ID=$(echo "$OUTPUT" | jq -r '.id')
           echo "env_id=$ENV_ID" >> "$GITHUB_OUTPUT"
 
       - name: Apply population
