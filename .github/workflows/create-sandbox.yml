@@ -79,6 +79,18 @@ jobs:
             --from-file ping-config/application-oidc.json \
             --no-color
 
+      - name: Grant IAM Team Environment Admin access to sandbox
+        run: |
+          # Inject the sandbox env ID as the role scope, then create the assignment
+          jq --arg env_id "${{ steps.create-env.outputs.env_id }}" \
+            '.scope.id = $env_id' ping-config/group-role-assignment.json \
+            > /tmp/role-assignment.json
+          pingcli pingone groups group-role-assignments create \
+            --environment-id "${{ secrets.PINGCLI_PINGONE_ADMINISTRATORS_ENV_ID }}" \
+            --group-id "${{ secrets.PINGCLI_PINGONE_IAM_TEAM_GROUP_ID }}" \
+            --from-file /tmp/role-assignment.json \
+            --no-color
+
       - name: Print sandbox details
         run: |
           ENV_ID="${{ steps.create-env.outputs.env_id }}"
