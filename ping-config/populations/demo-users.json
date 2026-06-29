@@ -1,4 +1,6 @@
 {
   "name": "Demo Users",
-  "description": "Default population for demo environment users"
+  "description": "Default population for demo environment users",
+  "default": false,
+  "preferredLanguage": "en"
 }

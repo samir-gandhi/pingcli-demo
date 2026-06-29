@@ -7,6 +7,16 @@
     "grantTypes": ["AUTHORIZATION_CODE", "REFRESH_TOKEN"],
     "responseTypes": ["CODE"],
     "tokenEndpointAuthMethod": "CLIENT_SECRET_BASIC",
-    "protocol": "OPENID_CONNECT"
+    "protocol": "OPENID_CONNECT",
+    "additionalRefreshTokenReplayProtectionEnabled": true,
+    "assignActorRoles": false,
+    "devicePollingInterval": 5,
+    "deviceTimeout": 600,
+    "hiddenFromAppPortal": false,
+    "idpSignoff": false,
+    "parRequirement": "OPTIONAL",
+    "parTimeout": 60,
+    "pkceEnforcement": "OPTIONAL",
+    "requestScopesForMultipleResourcesEnabled": false
   }
 }

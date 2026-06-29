@@ -1,7 +1,9 @@
 {
   "name": "Demo Password Policy",
   "description": "Standard password policy for demo environment",
-  "enabled": true,
+  "default": false,
+  "excludesCommonlyUsed": false,
+  "excludesProfileData": false,
   "minCharacters": {
     "abcdefghijklmnopqrstuvwxyz": 1,
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ": 1,
@@ -18,5 +20,6 @@
   "lockout": {
     "failureCount": 5,
     "durationSeconds": 900
-  }
+  },
+  "notSimilarToCurrent": false
 }
