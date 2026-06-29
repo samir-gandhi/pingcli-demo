@@ -87,7 +87,7 @@ jobs:
             '.scope.id = $env_id' ping-config/sandbox/group-role-assignment.json \
             > /tmp/role-assignment.json
           pingcli pingone groups group-role-assignments create \
-            --environment-id "c83a1b07-73ab-4d63-9251-0a03663f54ae" \
+            --environment-id "${{ vars.PINGONE_ADMINISTRATORS_ENV_ID }}" \
             --group-id "9000f404-7204-49a2-bf9f-d91e6f960e0d" \
             --from-file /tmp/role-assignment.json \
             --no-color
@@ -97,5 +97,5 @@ jobs:
           ENV_ID="${{ steps.create-env.outputs.env_id }}"
           echo "SANDBOX_NAME=${{ steps.env-name.outputs.name }}"
           echo "SANDBOX_ENV_ID=$ENV_ID"
-          ADMIN_ENV_ID="c83a1b07-73ab-4d63-9251-0a03663f54ae"
+          ADMIN_ENV_ID="${{ vars.PINGONE_ADMINISTRATORS_ENV_ID }}"
           echo "SANDBOX_CONSOLE_URL=https://console.${PINGONE_ROOT_DOMAIN}/index.html?env=${ADMIN_ENV_ID}#/${ENV_ID}/dashboard"
