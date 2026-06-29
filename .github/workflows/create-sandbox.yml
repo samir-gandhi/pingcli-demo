@@ -41,20 +41,27 @@ jobs:
           NAME=$(echo "${{ github.ref_name }}" | sed 's|/|-|g' | tr -cd '[:alnum:]-_')
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
 
+      - name: Generate environment template
+        run: |
+          pingcli pingone environments template --output-file /tmp/sandbox-env.json
+          echo "Template contents:"
+          cat /tmp/sandbox-env.json
+
+      - name: Inject sandbox name and type
+        run: |
+          NAME="${{ steps.env-name.outputs.name }}"
+          jq --arg name "$NAME" '.name = $name | .type = "SANDBOX"' /tmp/sandbox-env.json > /tmp/sandbox-env-final.json
+          echo "Final body:"
+          cat /tmp/sandbox-env-final.json
+
       - name: Create or update sandbox environment
         id: create-env
         run: |
-          NAME="${{ steps.env-name.outputs.name }}"
-
-          # Generate template and inject name + type
-          pingcli pingone environments template > /tmp/sandbox-env.json
-          jq --arg name "$NAME" '.name = $name | .type = "SANDBOX"' /tmp/sandbox-env.json > /tmp/sandbox-env-final.json
-
           OUTPUT=$(pingcli pingone environments apply \
             --from-file /tmp/sandbox-env-final.json \
             --output-format json \
             --no-color)
-
+          echo "API response: $OUTPUT"
           ENV_ID=$(echo "$OUTPUT" | jq -r '.id')
           echo "env_id=$ENV_ID" >> "$GITHUB_OUTPUT"
 
