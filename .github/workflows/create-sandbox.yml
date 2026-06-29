@@ -50,7 +50,12 @@ jobs:
       - name: Inject sandbox name and type
         run: |
           NAME="${{ steps.env-name.outputs.name }}"
-          jq --arg name "$NAME" '.name = $name | .type = "SANDBOX"' /tmp/sandbox-env.json > /tmp/sandbox-env-final.json
+          # Build a minimal body — the full template contains empty UUID fields that the API rejects
+          jq -n \
+            --arg name "$NAME" \
+            --argjson template "$(cat /tmp/sandbox-env.json)" \
+            '{name: $name, type: "SANDBOX", license: {id: $template.license.id}, region: $template.region}' \
+            > /tmp/sandbox-env-final.json
           echo "Final body:"
           cat /tmp/sandbox-env-final.json
 
