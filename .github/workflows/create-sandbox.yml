@@ -1,0 +1,95 @@
+name: Create Sandbox Environment
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'dev/**'
+      - 'sandbox/**'
+
+jobs:
+  create-sandbox:
+    name: Create sandbox for ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+
+    env:
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTID: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID }}
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_CLIENTCREDENTIALS_CLIENTSECRET: ${{ secrets.PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET }}
+      PINGCLI_SERVICE_PINGONE_ENDPOINT_ENVIRONMENTID: ${{ secrets.PINGCLI_PINGONE_ENVIRONMENT_ID }}
+      PINGCLI_SERVICE_PINGONE_ENDPOINT_ROOTDOMAIN: ${{ secrets.PINGCLI_PINGONE_ROOT_DOMAIN }}
+      PINGCLI_SERVICE_PINGONE_AUTHENTICATION_GRANTTYPE: client_credentials
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ping CLI
+        run: |
+          curl -fsSL -o /tmp/pingcli.deb \
+            https://github.com/pingidentity/pingcli/releases/download/v1.1.0/pingcli_1.1.0_linux_amd64.deb
+          sudo dpkg -i /tmp/pingcli.deb
+          pingcli --version
+
+      - name: Verify authentication
+        run: pingcli auth status --no-color
+
+      - name: Derive environment name from branch
+        id: env-name
+        run: |
+          # Replace / with - and strip any characters invalid for PingOne env names
+          NAME=$(echo "${{ github.ref_name }}" | sed 's|/|-|g' | tr -cd '[:alnum:]-_')
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update sandbox environment
+        id: create-env
+        run: |
+          NAME="${{ steps.env-name.outputs.name }}"
+
+          # Generate template and inject name + type
+          pingcli pingone environments template > /tmp/sandbox-env.json
+          python3 - /tmp/sandbox-env.json "$NAME" <<'EOF'
+          import sys, json
+          path, name = sys.argv[1], sys.argv[2]
+          with open(path) as f:
+              body = json.load(f)
+          body["name"] = name
+          body["type"] = "SANDBOX"
+          with open(path, "w") as f:
+              json.dump(body, f, indent=2)
+          EOF
+
+          OUTPUT=$(pingcli pingone environments apply \
+            --from-file /tmp/sandbox-env.json \
+            --output-format json \
+            --no-color)
+
+          ENV_ID=$(echo "$OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          echo "env_id=$ENV_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Apply population
+        run: |
+          pingcli --detailed-exitcode pingone populations apply \
+            --environment-id "${{ steps.create-env.outputs.env_id }}" \
+            --from-file ping-config/population.json \
+            --no-color
+
+      - name: Apply password policy
+        run: |
+          pingcli --detailed-exitcode pingone password-policies apply \
+            --environment-id "${{ steps.create-env.outputs.env_id }}" \
+            --from-file ping-config/password-policy.json \
+            --no-color
+
+      - name: Apply OIDC application
+        run: |
+          pingcli --detailed-exitcode pingone applications apply \
+            --environment-id "${{ steps.create-env.outputs.env_id }}" \
+            --from-file ping-config/application-oidc.json \
+            --no-color
+
+      - name: Print sandbox details
+        run: |
+          ENV_ID="${{ steps.create-env.outputs.env_id }}"
+          echo "SANDBOX_NAME=${{ steps.env-name.outputs.name }}"
+          echo "SANDBOX_ENV_ID=$ENV_ID"
+          echo "SANDBOX_CONSOLE_URL=https://console.pingone.com/?env=$ENV_ID"
